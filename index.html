@@ -400,97 +400,54 @@ function buildChecklist() {
 
 // ── DESCARGA PDF ──────────────────────────────────────────────────────────────
 async function downloadPDF() {
-  const btn     = document.getElementById('btn-dl');
+  const btn = document.getElementById('btn-dl');
   const spinner = document.getElementById('spinner');
 
-  // Nombre del archivo
   const autorRaw = document.getElementById('f-autor')?.value?.trim() || 'estudiante';
   const safeName = autorRaw
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9\s]/g, '').trim()
-    .replace(/\s+/g, '_').slice(0, 60) || 'estudiante';
-  const fileName = `${safeName}_noticia.pdf`;
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '_');
 
-  btn.textContent = 'Generando PDF…';
-  btn.disabled    = true;
+  const fileName = `${safeName || 'estudiante'}_noticia.pdf`;
+
+  btn.disabled = true;
   spinner.style.display = 'block';
 
   try {
-    // Clonar el nodo de la noticia para renderizarlo fuera del layout
-    const source = document.getElementById('newspaper-preview');
-    const wrap   = document.createElement('div');
-    wrap.style.cssText = [
-      'position:fixed','top:0','left:-10000','z-index:9999',
-      'opacity:1','pointer-events:none',
-      'width:740px','background:#fff',
-      'font-family:Georgia,serif',
-    ].join(';');
-    const clone = source.cloneNode(true);
-    clone.style.cssText = 'width:740px;max-width:740px;box-shadow:none;';
-    // Mantener columnas en el clon
-    const cols = clone.querySelector('.article-columns');
-    if (cols) { cols.style.columnCount='3'; cols.style.webkitColumnCount='3'; }
-    wrap.appendChild(clone);
-    document.body.appendChild(wrap);
+    const element = document.getElementById('newspaper-preview');
 
-    // Esperar a que el DOM se estabilice
-    await new Promise(r => setTimeout(r, 400));
-
-    const canvas = await html2canvas(wrap, {
-      scale:           2,
-      useCORS:         true,
-      allowTaint:      true,
-      backgroundColor: '#ffffff',
-      logging:         false,
-      width:           740,
-      windowWidth:     740,
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
     });
 
-    document.body.removeChild(wrap);
-
     const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
 
-    // Dimensiones A4 en mm
-    const pageW  = 210, pageH = 297, margin = 10;
-    const usableW = pageW - margin * 2;
-    const pxToMm  = 25.4 / (96 * 2);          // 2× scale
-    const rendW   = canvas.width  * pxToMm;
-    const rendH   = canvas.height * pxToMm;
-    const scale   = usableW / rendW;
-    const finalW  = usableW;
-    const finalH  = rendH * scale;
+    const pdfWidth = 190;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const imgData = canvas.toDataURL('image/png');
 
-    if (finalH <= pageH - margin * 2) {
-      // Una sola página
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', margin, margin, finalW, finalH);
-    } else {
-      // Múltiples páginas — recortar el canvas
-      const pageContentH = pageH - margin * 2;         // mm por página
-      const pageContentPx = pageContentH / (finalH / canvas.height); // px por página
-      const totalPages = Math.ceil(canvas.height / pageContentPx);
-      for (let pg = 0; pg < totalPages; pg++) {
-        if (pg > 0) pdf.addPage();
-        const srcYpx = Math.round(pg * pageContentPx);
-        const srcHpx = Math.min(Math.round(pageContentPx), canvas.height - srcYpx);
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width  = canvas.width;
-        pageCanvas.height = srcHpx;
-        pageCanvas.getContext('2d').drawImage(canvas, 0, srcYpx, canvas.width, srcHpx, 0, 0, canvas.width, srcHpx);
-        const sliceH = srcHpx * pxToMm * scale;
-        pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.93), 'JPEG', margin, margin, finalW, sliceH);
-      }
-    }
+    pdf.addImage(
+      imgData,
+      'PNG',
+      10,
+      10,
+      pdfWidth,
+      pdfHeight
+    );
 
     pdf.save(fileName);
 
-  } catch (err) {
-    console.error(err);
-    alert('Ocurrió un error al generar el PDF. Asegurate de estar conectado a internet e intentá de nuevo.');
+  } catch (error) {
+    console.error(error);
+    alert('Error al generar el PDF.');
   } finally {
-    btn.textContent       = '⬇ Descargar PDF';
-    btn.disabled          = false;
+    btn.disabled = false;
     spinner.style.display = 'none';
   }
 }
