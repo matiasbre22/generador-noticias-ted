@@ -424,30 +424,30 @@ async function downloadPDF() {
       backgroundColor: '#ffffff'
     });
 
-const pageWidth = 190;
-const pageHeight = 277; // A4 menos márgenes
+   const pageWidth = 190;
+   const pageHeight = 277; // A4 menos márgenes
+   
+   let imgWidth = pageWidth;
+   let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-let imgWidth = pageWidth;
-let imgHeight = (canvas.height * imgWidth) / canvas.width;
+   // Si la noticia es más alta que la hoja,
+   // se reduce proporcionalmente para que entre completa.
+   if (imgHeight > pageHeight) {
+     const scaleFactor = pageHeight / imgHeight;
+     imgWidth = imgWidth * scaleFactor;
+     imgHeight = imgHeight * scaleFactor;
+   }
 
-// Si la noticia es más alta que la hoja,
-// se reduce proporcionalmente para que entre completa.
-if (imgHeight > pageHeight) {
-  const scaleFactor = pageHeight / imgHeight;
-  imgWidth = imgWidth * scaleFactor;
-  imgHeight = imgHeight * scaleFactor;
-}
+   const imgData = canvas.toDataURL('image/png');
 
-const imgData = canvas.toDataURL('image/png');
-
-pdf.addImage(
-  imgData,
-  'PNG',
-  10,
-  10,
-  imgWidth,
-  imgHeight
-);
+   pdf.addImage(
+     imgData,
+    'PNG',
+    10,
+    10,
+    imgWidth,
+    imgHeight
+   );
 
     pdf.save(fileName);
 
