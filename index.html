@@ -429,13 +429,34 @@ async function downloadPDF() {
   spinner.style.display = 'block';
 
   try {
-    const element = document.getElementById('newspaper-preview');
+  const original = document.getElementById('newspaper-preview');
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff'
-    });
+  const cloneContainer = document.createElement('div');
+  cloneContainer.style.position = 'fixed';
+  cloneContainer.style.left = '-9999px';
+  cloneContainer.style.top = '0';
+  cloneContainer.style.width = '900px';
+  cloneContainer.style.background = '#fff';
+
+  const clone = original.cloneNode(true);
+  clone.style.maxWidth = '850px';
+  clone.style.width = '850px';
+
+  const cols = clone.querySelector('.article-columns');
+  if (cols) {
+  cols.style.columnCount = '2';
+  }
+
+  cloneContainer.appendChild(clone);
+  document.body.appendChild(cloneContainer);
+
+  const canvas = await html2canvas(clone, {
+  scale: 2,
+  useCORS: true,
+  backgroundColor: '#ffffff'
+  });
+
+  document.body.removeChild(cloneContainer);
 
    const pageWidth = 190;
    const pageHeight = 277; // A4 menos márgenes
