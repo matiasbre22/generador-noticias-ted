@@ -424,22 +424,30 @@ async function downloadPDF() {
       backgroundColor: '#ffffff'
     });
 
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+const pageWidth = 190;
+const pageHeight = 277; // A4 menos márgenes
 
-    const pdfWidth = 190;
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+let imgWidth = pageWidth;
+let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    const imgData = canvas.toDataURL('image/png');
+// Si la noticia es más alta que la hoja,
+// se reduce proporcionalmente para que entre completa.
+if (imgHeight > pageHeight) {
+  const scaleFactor = pageHeight / imgHeight;
+  imgWidth = imgWidth * scaleFactor;
+  imgHeight = imgHeight * scaleFactor;
+}
 
-    pdf.addImage(
-      imgData,
-      'PNG',
-      10,
-      10,
-      pdfWidth,
-      pdfHeight
-    );
+const imgData = canvas.toDataURL('image/png');
+
+pdf.addImage(
+  imgData,
+  'PNG',
+  10,
+  10,
+  imgWidth,
+  imgHeight
+);
 
     pdf.save(fileName);
 
