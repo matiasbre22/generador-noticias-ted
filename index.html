@@ -426,6 +426,9 @@ async function downloadPDF() {
 
    const pageWidth = 190;
    const pageHeight = 277; // A4 menos márgenes
+
+   const { jsPDF } = window.jspdf;
+   const pdf = new jsPDF('p', 'mm', 'a4');
    
    let imgWidth = pageWidth;
    let imgHeight = (canvas.height * imgWidth) / canvas.width;
